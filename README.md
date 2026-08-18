@@ -1,0 +1,203 @@
+# 🔍 FinePrint AI
+
+**AI-powered Terms of Service & Privacy Policy Analyzer**
+
+FinePrint AI automatically reads ToS/Privacy Policy documents, identifies potentially unfair or risky clauses, and explains *why* they're problematic using real-world examples from the [ToS;DR](https://tosdr.org) project.
+
+![Python 3.13](https://img.shields.io/badge/Python-3.13-blue)
+![Legal-BERT](https://img.shields.io/badge/Model-Legal--BERT-green)
+![React](https://img.shields.io/badge/Frontend-React-61DAFB)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)
+
+---
+
+## How It Works
+
+```
+Input (URL / Text / PDF)
+    ↓
+Text Extraction (trafilatura / PyPDF2)
+    ↓
+Clause Segmentation (spaCy)
+    ↓
+Risk Classification (Fine-tuned Legal-BERT)
+    ↓
+RAG Explanations (FAISS + ToS;DR knowledge base)
+    ↓
+Color-Coded Results + Export
+```
+
+### Key Components
+
+1. **Clause Segmentation** — spaCy-based sentence splitting with a merging heuristic that combines short fragments into meaningful clauses
+2. **Risk Classification** — Legal-BERT (`nlpaueb/legal-bert-base-uncased`) fine-tuned on the [TOS_Dataset](https://huggingface.co/datasets/CodeHima/TOS_Dataset) for 3-class fairness classification
+3. **RAG Explanations** — When a clause is flagged, we retrieve the most similar previously-annotated clause from the ToS;DR knowledge base and show its explanation. This uses sentence-transformers + FAISS for fast similarity search.
+
+---
+
+## Setup
+
+```bash
+# clone and enter project
+git clone https://github.com/yourusername/fineprint-ai.git
+cd fineprint-ai
+
+# create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# install dependencies
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+## Training the Model
+
+```bash
+# step 1: download datasets
+python data/download_data.py
+
+# step 2: preprocess (clean, split, balance)
+python data/preprocess.py
+
+# step 3: fine-tune Legal-BERT (~15-25 min on Apple Silicon)
+python model/train.py
+
+# step 4: evaluate
+python model/evaluate.py
+
+# step 5: build RAG index
+python data/build_rag_index.py
+```
+
+## Running the App
+
+```bash
+# option 1: use the run script (starts both backend + frontend)
+./run.sh
+
+# option 2: start manually
+# terminal 1 — backend
+uvicorn server:app --reload --port 8000
+
+# terminal 2 — frontend
+cd frontend && npm run dev
+```
+
+Open `http://localhost:5173` — paste a ToS URL, upload a PDF, or paste text directly.
+
+---
+
+## Evaluation
+
+### Model Comparison (3-epoch ablation)
+
+| Metric | Legal-BERT | BERT-base | DistilBERT |
+|--------|-----------|-----------|------------|
+| Macro F1 | **0.8153** | 0.8213 | 0.8313 |
+| Precision | **0.8265** | 0.8244 | 0.8370 |
+| Recall | **0.8096** | 0.8184 | 0.8265 |
+| Training Time | **45.8 min** | 108.6 min | 25.7 min |
+
+> **Note:** DistilBERT achieves the highest F1 (0.831) while being 2× faster than Legal-BERT and 4× faster than BERT-base. The production model uses Legal-BERT (fine-tuned for 5 epochs) for its domain robustness on complex legal text.
+
+### Production Model (Legal-BERT, 5 epochs)
+
+| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|--------|----------|---------|
+| Fair | 0.893 | 0.901 | 0.897 | 493 |
+| Potentially Unfair | 0.737 | 0.826 | 0.779 | 247 |
+| Unfair | 0.854 | 0.733 | 0.789 | 240 |
+| **Macro Avg** | **0.828** | **0.820** | **0.822** | **980** |
+
+**Overall Accuracy:** 84.1% on 980 held-out test samples.
+
+### Human Agreement Study
+
+- **50 clauses** manually labeled and compared against model predictions
+- **Agreements:** 28 / 50 (56%)
+- **Cohen's Kappa:** 0.043 (slight agreement — reflects model conservatism and inherent subjectivity of fairness judgments)
+- Disagreement analysis included in `evaluation/results/`
+
+---
+
+## Datasets
+
+| Dataset | Purpose | Source |
+|---------|---------|--------|
+| TOS_Dataset | Model training (clause fairness) | [HuggingFace](https://huggingface.co/datasets/CodeHima/TOS_Dataset) |
+| ToS;DR Cases | RAG knowledge base | [tosdr.org](https://tosdr.org) |
+| CUAD | Benchmark comparison | [Atticus Project](https://www.atticusprojectai.org/cuad) |
+
+---
+
+## Project Structure
+
+```
+FinePrint AI/
+├── server.py               # FastAPI backend (REST API)
+├── pipeline.py             # End-to-end analysis orchestration
+├── segmentation.py         # Clause segmentation (spaCy)
+├── report_gen.py           # PDF report generator
+├── run.sh                  # Launch script (backend + frontend)
+├── frontend/               # React + Vite UI
+│   ├── src/
+│   │   ├── App.jsx         # Main app component
+│   │   ├── components/     # UI components
+│   │   └── api/            # API client
+│   └── package.json
+├── data/
+│   ├── download_data.py    # Dataset fetching
+│   ├── preprocess.py       # Data cleaning and splitting
+│   └── build_rag_index.py  # FAISS index construction
+├── model/
+│   ├── train.py            # Legal-BERT fine-tuning
+│   ├── evaluate.py         # Per-class metrics + confusion matrix
+│   └── predict.py          # Inference module
+├── rag/
+│   └── explainer.py        # RAG retrieval for explanations
+├── evaluation/
+│   ├── human_eval.py       # 50-clause agreement study
+│   └── ablation.py         # Model comparison study
+└── report/
+    └── report.md           # Technical write-up
+```
+
+---
+
+## Tech Stack
+
+- **Model**: Legal-BERT (fine-tuned) — domain-specific transformer pretrained on legal text
+- **RAG**: sentence-transformers (`all-MiniLM-L6-v2`) + FAISS for similarity search
+- **NLP**: spaCy for clause segmentation
+- **Backend**: FastAPI with uvicorn
+- **Frontend**: React + Vite
+- **Training**: HuggingFace Transformers + Trainer API, MPS acceleration on Apple Silicon
+
+---
+
+## Limitations
+
+- Trained on English ToS/Privacy Policies only
+- Clause segmentation uses heuristics — complex legal formatting may cause splitting errors
+- RAG explanations are limited to the ToS;DR knowledge base coverage
+- Model confidence scores should not be interpreted as legal advice
+
+## Future Work
+
+- Browser extension for automatic ToS scanning
+- Support for CUAD-style commercial contract analysis
+- Multi-language support
+- Fine-grained subcategory classification (data-sharing, arbitration, tracking, etc.)
+
+---
+
+## License
+
+MIT
+
+## Acknowledgments
+
+- [ToS;DR Project](https://tosdr.org) for their crowdsourced annotations
+- [LEGAL-BERT](https://huggingface.co/nlpaueb/legal-bert-base-uncased) by NLP@AUEB
+- [TOS_Dataset](https://huggingface.co/datasets/CodeHima/TOS_Dataset) on HuggingFace
