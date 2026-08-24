@@ -9,7 +9,7 @@ export default function Hero() {
         AI-Powered Legal Document Analysis
       </div>
       <h1 className="hero-title">
-        Fine<span className="hero-grad">Print</span> AI
+        <span className="hero-grad">Terms</span>Analyzer
       </h1>
       <p className="hero-desc">
         Instantly analyze Terms of Service &amp; Privacy Policies.

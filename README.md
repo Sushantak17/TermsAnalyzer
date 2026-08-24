@@ -1,8 +1,8 @@
-# 🔍 FinePrint AI
+# 🔍 TermsAnalyzer
 
 **AI-powered Terms of Service & Privacy Policy Analyzer**
 
-FinePrint AI automatically reads ToS/Privacy Policy documents, identifies potentially unfair or risky clauses, and explains *why* they're problematic using real-world examples from the [ToS;DR](https://tosdr.org) project.
+TermsAnalyzer automatically reads ToS/Privacy Policy documents, identifies potentially unfair or risky clauses, and explains *why* they're problematic using real-world examples from the [ToS;DR](https://tosdr.org) project.
 
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue)
 ![Legal-BERT](https://img.shields.io/badge/Model-Legal--BERT-green)
@@ -39,8 +39,8 @@ Color-Coded Results + Export
 
 ```bash
 # clone and enter project
-git clone https://github.com/yourusername/fineprint-ai.git
-cd fineprint-ai
+git clone https://github.com/yourusername/termsanalyzer.git
+cd termsanalyzer
 
 # create virtual environment
 python3 -m venv venv
@@ -85,6 +85,18 @@ cd frontend && npm run dev
 ```
 
 Open `http://localhost:5173` — paste a ToS URL, upload a PDF, or paste text directly.
+
+## Browser Extension
+
+Analyze any ToS/Privacy Policy page directly in Chrome:
+
+1. Start the backend: `uvicorn server:app --port 8000`
+2. Go to `chrome://extensions` → enable **Developer mode**
+3. Click **Load unpacked** → select the `extension/` folder
+4. Navigate to any ToS page and click the TermsAnalyzer icon
+5. Click **"Analyze This Page"** in the side panel
+
+Features: risk classification, RAG explanations, clause filtering, and in-page highlighting of flagged clauses.
 
 ---
 
@@ -134,7 +146,7 @@ Open `http://localhost:5173` — paste a ToS URL, upload a PDF, or paste text di
 ## Project Structure
 
 ```
-FinePrint AI/
+TermsAnalyzer/
 ├── server.py               # FastAPI backend (REST API)
 ├── pipeline.py             # End-to-end analysis orchestration
 ├── segmentation.py         # Clause segmentation (spaCy)
@@ -146,6 +158,11 @@ FinePrint AI/
 │   │   ├── components/     # UI components
 │   │   └── api/            # API client
 │   └── package.json
+├── extension/              # Chrome Extension (Manifest V3)
+│   ├── manifest.json       # Extension config
+│   ├── service-worker.js   # Background script
+│   ├── content-script.js   # In-page highlighting logic
+│   └── sidepanel/          # Side panel UI
 ├── data/
 │   ├── download_data.py    # Dataset fetching
 │   ├── preprocess.py       # Data cleaning and splitting
@@ -185,7 +202,6 @@ FinePrint AI/
 
 ## Future Work
 
-- Browser extension for automatic ToS scanning
 - Support for CUAD-style commercial contract analysis
 - Multi-language support
 - Fine-grained subcategory classification (data-sharing, arbitration, tracking, etc.)

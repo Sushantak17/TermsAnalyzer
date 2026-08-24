@@ -59,7 +59,7 @@ def plot_confusion_matrix(y_true, y_pred, output_path):
     )
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
-    plt.title("Confusion Matrix — FinePrint AI")
+    plt.title("Confusion Matrix — TermsAnalyzer")
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()

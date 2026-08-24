@@ -27,7 +27,7 @@ class AnalyzedClause:
     explanations: list = field(default_factory=list)
 
 
-class FinePrintAnalyzer:
+class TermsAnalyzer:
     """Full analysis pipeline: raw text -> analyzed clauses with explanations."""
 
     def __init__(self, model_path=None, index_path=None, metadata_path=None):

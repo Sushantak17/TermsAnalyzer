@@ -4,7 +4,7 @@ trap 'kill 0' EXIT
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
-echo "Starting FinePrint AI..."
+echo "Starting TermsAnalyzer..."
 echo ""
 echo "Backend:  http://localhost:8000"
 echo "Frontend: http://localhost:5173"

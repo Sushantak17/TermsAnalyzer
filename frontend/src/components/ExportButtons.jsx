@@ -14,7 +14,7 @@ export default function ExportButtons({ data }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "fineprint_report.pdf";
+    a.download = "termsanalyzer_report.pdf";
     a.click();
     URL.revokeObjectURL(url);
   }

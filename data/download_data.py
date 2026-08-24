@@ -1,4 +1,4 @@
-"""Download datasets for FinePrint AI.
+"""Download datasets for TermsAnalyzer.
 
 Fetches two data sources:
 1. TOS_Dataset from HuggingFace — clause-level fairness labels for training

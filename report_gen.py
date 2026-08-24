@@ -1,4 +1,4 @@
-"""PDF report generator for FinePrint AI analysis results.
+"""PDF report generator for TermsAnalyzer analysis results.
 
 Creates a styled PDF report with summary, risk breakdown, readability,
 key findings, and all clause details.
@@ -42,7 +42,7 @@ class ReportPDF(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 10)
         self.set_text_color(100, 116, 139)
-        self.cell(0, 8, "FinePrint AI Analysis Report", align="L")
+        self.cell(0, 8, "TermsAnalyzer Analysis Report", align="L")
         self.cell(0, 8, datetime.now().strftime("%B %d, %Y"), align="R", new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(226, 232, 240)
         self.line(10, self.get_y(), 200, self.get_y())
@@ -65,7 +65,7 @@ def generate_pdf(results, summary, readability, summary_text):
     # -- title --
     pdf.set_font("Helvetica", "B", 24)
     pdf.set_text_color(30, 41, 59)
-    pdf.cell(0, 14, "FinePrint AI", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 14, "TermsAnalyzer", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 11)
     pdf.set_text_color(100, 116, 139)
     pdf.cell(0, 7, "Terms of Service & Privacy Policy Analysis", new_x="LMARGIN", new_y="NEXT")

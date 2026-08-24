@@ -4,19 +4,23 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
-from pipeline import FinePrintAnalyzer
+from pipeline import TermsAnalyzer
 from report_gen import generate_pdf
 
-app = FastAPI(title="FinePrint AI API")
+app = FastAPI(title="TermsAnalyzer API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_origin_regex=r"^chrome-extension://.*$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-analyzer = FinePrintAnalyzer()
+analyzer = TermsAnalyzer()
 
 LABELS = {"fair": "Fair", "potentially_unfair": "Potentially Unfair", "unfair": "Clearly Unfair"}
 
@@ -25,11 +29,11 @@ def build_response(results, raw_text=None):
     if not results:
         raise HTTPException(status_code=400, detail="No clauses could be extracted")
 
-    summary = FinePrintAnalyzer.summarize(results)
+    summary = TermsAnalyzer.summarize(results)
     doc_text = raw_text or " ".join(r.clause for r in results)
-    readability = FinePrintAnalyzer.readability(doc_text)
-    summary_text = FinePrintAnalyzer.generate_summary_text(results, summary)
-    clauses = FinePrintAnalyzer.to_dicts(results)
+    readability = TermsAnalyzer.readability(doc_text)
+    summary_text = TermsAnalyzer.generate_summary_text(results, summary)
+    clauses = TermsAnalyzer.to_dicts(results)
 
     return {
         "clauses": clauses,
@@ -104,4 +108,4 @@ def generate_report(body: ReportInput):
     results = [Clause(**c) for c in body.clauses]
     pdf_bytes = generate_pdf(results, body.summary, body.readability, body.summary_text)
     return Response(content=pdf_bytes, media_type="application/pdf",
-                    headers={"Content-Disposition": "attachment; filename=fineprint_report.pdf"})
+                    headers={"Content-Disposition": "attachment; filename=termsanalyzer_report.pdf"})

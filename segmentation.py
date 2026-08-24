@@ -27,10 +27,54 @@ def segment(text):
     # merge very short sentences with neighbors
     clauses = merge_short(sentences)
 
-    # drop anything too short to be meaningful
-    clauses = [c for c in clauses if len(c.split()) >= 5]
+    # drop anything too short to be a real clause
+    clauses = [c for c in clauses if len(c.split()) >= 8]
+
+    # drop headings and boilerplate (no verb / too short to be a clause)
+    clauses = [c for c in clauses if not _is_heading(c)]
 
     return clauses
+
+
+def _is_heading(text):
+    """Heuristic: detect headings, dates, and boilerplate that aren't real clauses."""
+    text_lower = text.lower().strip()
+
+    boilerplate_markers = [
+        "terms of use", "terms of service", "privacy policy",
+        "thank you for", "welcome to", "table of contents",
+        "last modified", "effective date", "previous version",
+        "cookie policy", "acceptable use", "end user license",
+    ]
+
+    # Check the whole text
+    if re.match(r"^(effective|last updated|updated|date)[:\s]", text_lower):
+        return True
+
+    # Check each line individually — merged clauses may have multiple heading lines
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    if not lines:
+        return True
+
+    # If ALL lines are short boilerplate fragments, drop the whole clause
+    non_heading_lines = 0
+    for line in lines:
+        line_lower = line.lower()
+        line_words = len(line.split())
+
+        is_boilerplate = (
+            line_words < 10 and any(m in line_lower for m in boilerplate_markers)
+        ) or (
+            line_words < 5  # very short fragment like "Terms of Use"
+        ) or (
+            re.match(r"^(effective|last updated|updated|date)[:\s]", line_lower)
+        )
+
+        if not is_boilerplate:
+            non_heading_lines += 1
+
+    # If no substantive lines, it's all headings/boilerplate
+    return non_heading_lines == 0
 
 
 def clean_text(text):
