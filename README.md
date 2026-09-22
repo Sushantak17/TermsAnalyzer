@@ -102,7 +102,7 @@ Features: risk classification, RAG explanations, clause filtering, and in-page h
 
 ## Evaluation
 
-### Model Comparison (3-epoch ablation)
+### Model Comparison (3-epoch)
 
 | Metric | Legal-BERT | BERT-base | DistilBERT |
 |--------|-----------|-----------|------------|
