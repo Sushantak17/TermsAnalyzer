@@ -124,13 +124,6 @@ Features: risk classification, RAG explanations, clause filtering, and in-page h
 
 **Overall Accuracy:** 84.1% on 980 held-out test samples.
 
-### Human Agreement Study
-
-- **50 clauses** manually labeled and compared against model predictions
-- **Agreements:** 28 / 50 (56%)
-- **Cohen's Kappa:** 0.043 (slight agreement — reflects model conservatism and inherent subjectivity of fairness judgments)
-- Disagreement analysis included in `evaluation/results/`
-
 ---
 
 ## Datasets
@@ -202,6 +195,7 @@ TermsAnalyzer/
 
 ## Future Work
 
+- Headless Browser Integration: Add Playwright or Selenium to extract JavaScript-rendered policy text, improving URL analysis across the app and extension
 - Support for CUAD-style commercial contract analysis
 - Multi-language support
 - Fine-grained subcategory classification (data-sharing, arbitration, tracking, etc.)
