@@ -103,6 +103,7 @@ Features: risk classification, RAG explanations, clause filtering, and in-page h
 ## Evaluation
 
 ### Model Comparison (3-epoch, validation set)
+### Model Comparison (3-epoch, validation set)
 
 | Metric | Legal-BERT | BERT-base | DistilBERT |
 |--------|-----------|-----------|------------|
@@ -111,7 +112,7 @@ Features: risk classification, RAG explanations, clause filtering, and in-page h
 | Recall | **0.8096** | 0.8184 | 0.8265 |
 | Training Time | **45.8 min** | 108.6 min | 25.7 min |
 
-> **Note:** Models were compared using **validation set** metrics for model selection (test set reserved for final unbiased evaluation). DistilBERT achieves the highest validation F1 (0.831) while being 2× faster than Legal-BERT and 4× faster than BERT-base. The production model uses Legal-BERT, fine-tuned for up to 5 epochs, due to its domain-specific pretraining on legal text and alignment with the project's legal-text use case.
+> **Note:** Models were compared using **validation set** metrics for model selection (test set reserved for final unbiased evaluation). DistilBERT achieves the highest validation F1 (0.831) while being 2× faster than Legal-BERT and 4× faster than BERT-base. The production model uses Legal-BERT (fine-tuned for 5 epochs) for its domain robustness on complex legal text.
 
 ### Production Model (Legal-BERT, 5 epochs)
 

@@ -1,7 +1,8 @@
-"""Ablation study — compare Legal-BERT vs DistilBERT vs vanilla BERT.
+"""Model comparison — compare Legal-BERT vs DistilBERT vs vanilla BERT.
 
-Trains all three on the same data, compares macro F1 to show
-the benefit of domain-specific pretraining.
+Trains all three on the same data, compares macro F1 on the
+**validation set** for model selection, then evaluates the
+winning model on the held-out test set for unbiased reporting.
 """
 
 import json
@@ -44,8 +45,8 @@ def compute_metrics(eval_pred):
     }
 
 
-def train_and_eval(model_name, train_data, val_data, test_data, run_name):
-    """Train a model and return metrics."""
+def train_and_eval(model_name, train_data, val_data, run_name):
+    """Train a model and return validation metrics (NOT test metrics)."""
     print(f"\n{'=' * 60}")
     print(f"Training: {run_name} ({model_name})")
     print(f"{'=' * 60}")
@@ -57,14 +58,13 @@ def train_and_eval(model_name, train_data, val_data, test_data, run_name):
 
     train_ds = ClauseDataset(train_data, tokenizer)
     val_ds = ClauseDataset(val_data, tokenizer)
-    test_ds = ClauseDataset(test_data, tokenizer)
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
 
-    output_dir = OUTPUT_DIR / "ablation" / run_name.lower().replace(" ", "_")
+    output_dir = OUTPUT_DIR / "model_comparison" / run_name.lower().replace(" ", "_")
     training_args = TrainingArguments(
         output_dir=str(output_dir),
-        num_train_epochs=3,  # fewer epochs for ablation
+        num_train_epochs=3,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=32,
         learning_rate=2e-5,
@@ -89,20 +89,21 @@ def train_and_eval(model_name, train_data, val_data, test_data, run_name):
     trainer.train()
     train_time = time.time() - start
 
-    # evaluate on test set
-    test_results = trainer.evaluate(test_ds)
+    # evaluate on VALIDATION set for model selection
+    val_results = trainer.evaluate(val_ds)
 
     return {
         "model": run_name,
-        "f1": round(test_results["eval_f1"], 4),
-        "precision": round(test_results["eval_precision"], 4),
-        "recall": round(test_results["eval_recall"], 4),
+        "val_f1": round(val_results["eval_f1"], 4),
+        "val_precision": round(val_results["eval_precision"], 4),
+        "val_recall": round(val_results["eval_recall"], 4),
         "train_time_min": round(train_time / 60, 1),
+        "trainer": trainer,  # keep trainer for test evaluation of winner
     }
 
 
-def run_ablation():
-    """Run full ablation study."""
+def run_comparison():
+    """Run full model comparison study."""
     # load data
     with open(DATA_DIR / "train.json") as f:
         train_data = json.load(f)
@@ -113,30 +114,66 @@ def run_ablation():
 
     print(f"Train: {len(train_data)}, Val: {len(val_data)}, Test: {len(test_data)}")
 
-    # run each model
-    results = []
-    for name, model_id in MODELS.items():
-        result = train_and_eval(model_id, train_data, val_data, test_data, name)
-        results.append(result)
-        print(f"\n{name}: F1={result['f1']}, Time={result['train_time_min']}min")
+    # --- Phase 1: Train all models, compare on VALIDATION set ---
+    print("\n" + "=" * 60)
+    print("PHASE 1: Model Selection (using validation set)")
+    print("=" * 60)
 
-    # comparison table
+    results = []
+    trainers = {}
+    for name, model_id in MODELS.items():
+        result = train_and_eval(model_id, train_data, val_data, name)
+        trainers[name] = result.pop("trainer")  # separate trainer from results
+        results.append(result)
+        print(f"\n{name}: Val F1={result['val_f1']}, Time={result['train_time_min']}min")
+
+    # comparison table (validation metrics)
     print(f"\n{'=' * 60}")
-    print("ABLATION RESULTS")
+    print("MODEL COMPARISON RESULTS (Validation Set)")
     print(f"{'=' * 60}")
-    print(f"{'Model':<15} {'F1':>8} {'Precision':>10} {'Recall':>8} {'Time (min)':>10}")
+    print(f"{'Model':<15} {'Val F1':>8} {'Precision':>10} {'Recall':>8} {'Time (min)':>10}")
     print("-" * 55)
     for r in results:
-        print(f"{r['model']:<15} {r['f1']:>8.4f} {r['precision']:>10.4f} {r['recall']:>8.4f} {r['train_time_min']:>10.1f}")
+        print(f"{r['model']:<15} {r['val_f1']:>8.4f} {r['val_precision']:>10.4f} {r['val_recall']:>8.4f} {r['train_time_min']:>10.1f}")
+
+    # --- Phase 2: Final test evaluation on the WINNING model only ---
+    winner = max(results, key=lambda r: r["val_f1"])
+    print(f"\n{'=' * 60}")
+    print(f"PHASE 2: Final Test Evaluation — Winner: {winner['model']}")
+    print(f"{'=' * 60}")
+
+    winner_tokenizer = AutoTokenizer.from_pretrained(MODELS[winner["model"]])
+    test_ds = ClauseDataset(test_data, winner_tokenizer)
+    test_results = trainers[winner["model"]].evaluate(test_ds)
+
+    winner["test_f1"] = round(test_results["eval_f1"], 4)
+    winner["test_precision"] = round(test_results["eval_precision"], 4)
+    winner["test_recall"] = round(test_results["eval_recall"], 4)
+
+    print(f"\n{winner['model']} Test Set Results:")
+    print(f"  F1:        {winner['test_f1']}")
+    print(f"  Precision: {winner['test_precision']}")
+    print(f"  Recall:    {winner['test_recall']}")
 
     # save
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_DIR / "ablation_results.json", "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"\nResults saved to {OUTPUT_DIR / 'ablation_results.json'}")
+    save_data = {
+        "methodology": "Models compared on validation set. Test set evaluated only on the winning model.",
+        "comparison_results": results,
+        "winner": winner["model"],
+        "test_results": {
+            "model": winner["model"],
+            "f1": winner["test_f1"],
+            "precision": winner["test_precision"],
+            "recall": winner["test_recall"],
+        },
+    }
+    with open(OUTPUT_DIR / "model_comparison_results.json", "w") as f:
+        json.dump(save_data, f, indent=2)
+    print(f"\nResults saved to {OUTPUT_DIR / 'model_comparison_results.json'}")
 
     return results
 
 
 if __name__ == "__main__":
-    run_ablation()
+    run_comparison()
