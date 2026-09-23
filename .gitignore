@@ -4,13 +4,19 @@ __pycache__/
 venv/
 node_modules/
 .env
-model/checkpoints/
-data/raw/
-data/processed/
-data/rag_index/
-model/results/
-evaluation/results/
-*.egg-info/
+
+# Backend generated/model artifacts
+backend/model/checkpoints/
+backend/model/results/
+backend/data/raw/
+backend/data/processed/
+backend/data/rag_index/
+backend/evaluation/results/
+
+# Frontend/build artifacts
+frontend/dist/
 dist/
 build/
+
+# Reports
 report/

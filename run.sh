@@ -13,8 +13,8 @@ echo ""
 source venv/bin/activate
 pip install -q fastapi uvicorn python-multipart
 
-export PYTHONPATH="$DIR:$PYTHONPATH"
-(cd /tmp && python -m uvicorn server:app --reload --reload-dir "$DIR" --port 8000) &
+export PYTHONPATH="$DIR/backend:$PYTHONPATH"
+(cd /tmp && python -m uvicorn server:app --reload --reload-dir "$DIR/backend" --port 8000) &
 cd frontend && npm run dev &
 
 wait

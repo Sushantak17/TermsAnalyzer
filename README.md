@@ -55,19 +55,19 @@ python -m spacy download en_core_web_sm
 
 ```bash
 # step 1: download datasets
-python data/download_data.py
+python backend/data/download_data.py
 
 # step 2: preprocess (clean, split, balance)
-python data/preprocess.py
+python backend/data/preprocess.py
 
 # step 3: fine-tune Legal-BERT (~15-25 min on Apple Silicon)
-python model/train.py
+python backend/model/train.py
 
 # step 4: evaluate
-python model/evaluate.py
+python backend/model/evaluate.py
 
 # step 5: build RAG index
-python data/build_rag_index.py
+python backend/data/build_rag_index.py
 ```
 
 ## Running the App
@@ -141,37 +141,37 @@ Features: risk classification, RAG explanations, clause filtering, and in-page h
 
 ```
 TermsAnalyzer/
-├── server.py               # FastAPI backend (REST API)
-├── pipeline.py             # End-to-end analysis orchestration
-├── segmentation.py         # Clause segmentation (spaCy)
-├── report_gen.py           # PDF report generator
 ├── run.sh                  # Launch script (backend + frontend)
+├── requirements.txt        # Python dependencies
+├── backend/                # Python backend
+│   ├── server.py           # FastAPI REST API
+│   ├── pipeline.py         # End-to-end analysis orchestration
+│   ├── segmentation.py     # Clause segmentation (spaCy)
+│   ├── report_gen.py       # PDF report generator
+│   ├── model/
+│   │   ├── train.py        # Legal-BERT fine-tuning
+│   │   ├── evaluate.py     # Per-class metrics + confusion matrix
+│   │   └── predict.py      # Inference module
+│   ├── rag/
+│   │   └── explainer.py    # RAG retrieval for explanations
+│   ├── data/
+│   │   ├── download_data.py    # Dataset fetching
+│   │   ├── preprocess.py       # Data cleaning and splitting
+│   │   └── build_rag_index.py  # FAISS index construction
+│   └── evaluation/
+│       ├── human_eval.py   # 50-clause agreement study
+│       └── ablation.py     # Model comparison study
 ├── frontend/               # React + Vite UI
 │   ├── src/
 │   │   ├── App.jsx         # Main app component
 │   │   ├── components/     # UI components
 │   │   └── api/            # API client
 │   └── package.json
-├── extension/              # Chrome Extension (Manifest V3)
-│   ├── manifest.json       # Extension config
-│   ├── service-worker.js   # Background script
-│   ├── content-script.js   # In-page highlighting logic
-│   └── sidepanel/          # Side panel UI
-├── data/
-│   ├── download_data.py    # Dataset fetching
-│   ├── preprocess.py       # Data cleaning and splitting
-│   └── build_rag_index.py  # FAISS index construction
-├── model/
-│   ├── train.py            # Legal-BERT fine-tuning
-│   ├── evaluate.py         # Per-class metrics + confusion matrix
-│   └── predict.py          # Inference module
-├── rag/
-│   └── explainer.py        # RAG retrieval for explanations
-├── evaluation/
-│   ├── human_eval.py       # 50-clause agreement study
-│   └── ablation.py         # Model comparison study
-└── report/
-    └── report.md           # Technical write-up
+└── extension/              # Chrome Extension (Manifest V3)
+    ├── manifest.json       # Extension config
+    ├── service-worker.js   # Background script
+    ├── content-script.js   # In-page highlighting logic
+    └── sidepanel/          # Side panel UI
 ```
 
 ---
